@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link rel="icon" href="https://fsms.iqoption.com/storage/public/5f/7a/fa83cf9ba7f8e8f0b7.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-b from-gray-800 to-gray-900 text-white font-[Prompt] min-h-screen flex flex-col items-center p-6">
+
+  <!-- Header -->
+  <h1 class="text-3xl font-bold mb-6 mt-4 text-yellow-400"> รายชื่อผู้ใช้ที่ติดต่อเข้ามา</h1>
+
+  <!-- รายชื่อห้อง -->
+  <ul id="room-list" class="w-full max-w-xl space-y-4">
+    <!-- รายชื่อห้องจะแสดงตรงนี้ -->
+  </ul>
+
+  <script>
+    function loadRooms() {
+      fetch("http://localhost:3001/api/rooms")
+        .then((res) => res.json())
+        .then((rooms) => {
+          const list = document.getElementById("room-list");
+          list.innerHTML = "";
+
+          const validRooms = rooms.filter(r => r && r !== "null");
+
+          if (validRooms.length === 0) {
+            list.innerHTML = "<p class='text-gray-400 text-center'>ยังไม่มีผู้ใช้ติดต่อเข้ามา</p>";
+            return;
+          }
+
+          validRooms.forEach((roomID) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="/admin-chat.html?roomID=${roomID}" 
+                 class="block bg-gray-800 hover:bg-yellow-500 hover:text-black transition-all p-4 rounded-lg shadow-md">
+                🟢 ห้องผู้ใช้: <strong>${roomID}</strong>
+              </a>
+            `;
+            list.appendChild(li);
+          });
+        })
+        .catch((err) => {
+          console.error("❌ Error fetching rooms:", err);
+          document.getElementById("room-list").innerHTML = "<p class='text-red-500'>ไม่สามารถโหลดรายชื่อผู้ใช้ได้</p>";
+        });
+    }
+
+    loadRooms();
+  </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Chat</title>
+  <link rel="icon" href="https://fsms.iqoption.com/storage/public/5f/7a/fa83cf9ba7f8e8f0b7.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col justify-between" style="font-family: 'Prompt', sans-serif;">
+  
+  <!-- Header -->
+  <div class="bg-gray-800 p-4 flex items-center">
+    <!-- 🔙 ปุ่มย้อนกลับ -->
+    <i class="fas fa-arrow-left text-white text-lg mr-4 cursor-pointer" onclick="window.location.href='admin-dashboard.html'"></i>
+    <i class="fas fa-user-shield text-yellow-500 mr-2"></i>
+    <span id="room-title" class="text-white text-lg">แชทกับผู้ใช้</span>
+  </div>
+
+  <!-- Chat Area -->
+  <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900">
+    <!-- Messages will be added here -->
+  </div>
+
+  <!-- Input Area -->
+  <div class="bg-gray-800 p-4 flex items-center">
+    <input id="message-input" type="text" placeholder="พิมพ์ข้อความ..." class="bg-gray-700 text-white p-2 w-full rounded-lg focus:outline-none"/>
+    
+    <!-- ปุ่มอัปโหลดรูป -->
+    <button id="image-upload-btn" class="ml-2 p-2 bg-gray-600 rounded-lg">
+      <i class="fas fa-image text-white"></i>
+    </button>
+    <input type="file" id="image-input" accept="image/*" class="hidden">
+    
+    <!-- ปุ่มส่งข้อความ -->
+    <button id="send-btn" class="bg-yellow-500 text-gray-900 px-4 py-2 ml-2 rounded-lg">ส่ง</button>
+  </div>
+
+  <script>
+    const socket = io("http://localhost:3001");
+    const roomID = new URLSearchParams(window.location.search).get("roomID");
+
+    if (!roomID) {
+      alert("❌ ไม่พบ roomID กรุณาเข้าผ่านหน้าหลัก");
+      window.location.href = "/admin-dashboard.html";
+    } else {
+      document.getElementById("room-title").textContent = `แชทกับผู้ใช้: ${roomID}`;
+      socket.emit("joinRoom", roomID);
+    }
+
+    socket.on("chatHistory", (messages) => {
+      messages.forEach(displayMessage);
+    });
+
+    socket.on("receiveMessage", displayMessage);
+    socket.on("receiveImage", displayMessage);
+
+    document.getElementById("send-btn").addEventListener("click", () => {
+      const input = document.getElementById("message-input");
+      const message = input.value.trim();
+      if (message) {
+        socket.emit("sendMessage", {
+          roomID,
+          username: "Admin",
+          message,
+        });
+        input.value = "";
+      }
+    });
+
+    // ✅ ระบบส่งรูปภาพ
+    document.getElementById("image-upload-btn").addEventListener("click", () => {
+      document.getElementById("image-input").click();
+    });
+
+    document.getElementById("image-input").addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          socket.emit("sendImage", {
+            roomID,
+            username: "Admin",
+            imageUrl: event.target.result
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function displayMessage(data) {
+      const chatBox = document.getElementById("chat-box");
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("p-2", "rounded-lg", "w-fit", "max-w-xs", "break-words");
+
+      if (data.username === "Admin") {
+        msgDiv.classList.add("bg-yellow-500", "text-black", "ml-auto");
+      } else {
+        msgDiv.classList.add("bg-gray-700", "text-white");
+      }
+
+      if (data.message) {
+        msgDiv.textContent = `${data.username}: ${data.message}`;
+      } else if (data.imageUrl) {
+        const img = document.createElement("img");
+        img.src = data.imageUrl;
+        img.classList.add("max-w-xs", "rounded");
+        msgDiv.appendChild(img);
+      }
+
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>
