@@ -36,7 +36,7 @@
   </div>
 
   <script>
-    const socket = io("http://localhost:3001");
+    const socket = io("https://chat-backend-8o9h.onrender.com");
     const roomID = new URLSearchParams(window.location.search).get("roomID");
 
     if (!roomID) {

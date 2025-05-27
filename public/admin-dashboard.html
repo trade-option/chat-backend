@@ -20,7 +20,7 @@
 
   <script>
     function loadRooms() {
-      fetch("http://localhost:3001/api/rooms")
+      fetch("https://chat-backend-8o9h.onrender.com/api/rooms")
         .then((res) => res.json())
         .then((rooms) => {
           const list = document.getElementById("room-list");
